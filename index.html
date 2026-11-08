@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>프랑켄슈타인 장소 사진</title>
 <style>
-  :root { --bg: #e9e7e3; --ink: #1d1c1a; --sub: #6d6a64; --line: #1d1c1a; --card: #fbfaf8; --pageW: 520px; --gut: 220px; }
+  :root { --bg: #e9e7e3; --ink: #1d1c1a; --sub: #6d6a64; --line: #1d1c1a; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.5 "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif; }
-  header { max-width: 980px; margin: 0 auto; padding: 48px 16px 24px; }
+  header { max-width: 1100px; margin: 0 auto; padding: 48px 16px 24px; }
   h1 { font: 500 22px/1.3 inherit; margin: 0 0 6px; letter-spacing: -0.01em; }
   header p { margin: 0; color: var(--sub); }
   .tools { margin-top: 18px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
@@ -19,104 +19,156 @@
   .index b { font-weight: 500; color: var(--ink); }
 
   main { padding: 0 16px 120px; }
-  .spread { display: grid; grid-template-columns: var(--gut) var(--pageW) var(--gut); justify-content: center; gap: 0 28px; margin: 0 auto 36px; }
-  .page { position: relative; grid-column: 2; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.06); background: #fff; }
-  .page img { display: block; width: 100%; height: auto; }
-  .gut { position: relative; }
-  .gut.l { grid-column: 1; grid-row: 1; }
-  .gut.r { grid-column: 3; grid-row: 1; }
+  /* 펼침면: 짝수 쪽 왼쪽, 홀수 쪽 오른쪽 */
+  .spread { display: grid; grid-template-columns: 1fr 1fr; max-width: 1100px; margin: 0 auto 40px; }
+  .page { position: relative; overflow: hidden; background: #fff; }
+  .page.empty { background: transparent; }
+  .page:not(.empty) { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+  .page > img { display: block; width: 100%; height: auto; clip-path: inset(6% 8.5%); }  /* 스캔 재단선(x 7.8·92%, y 5.5·94%) 잘라냄 */
+  /* 가운데 접힘 */
+  .page::after { content: ""; position: absolute; top: 0; bottom: 0; width: 6%; pointer-events: none; }
+  .page.l::after { right: 0; background: linear-gradient(to left, rgba(0,0,0,.12), transparent); }
+  .page.r::after { left: 0; background: linear-gradient(to right, rgba(0,0,0,.12), transparent); }
+  .page.empty::after { display: none; }
   body.only .spread:not(.has) { display: none; }
 
   .mark { position: absolute; border-bottom: 1.5px solid var(--line); }
-  .lead i { position: absolute; top: -7px; font: 600 9px/1 inherit; font-style: normal; background: var(--ink); color: #fff; padding: 2px 3px; border-radius: 2px; }
-  .lead.r i { right: -6px; } .lead.l i { left: -6px; }
-  .num { font-weight: 600; }
-  .lead { position: absolute; height: 0; border-top: 1px solid var(--line); opacity: .55; }
 
-  .card { position: absolute; left: 0; right: 0; background: var(--card); padding: 7px 7px 9px; box-shadow: 0 1px 2px rgba(0,0,0,.1), 0 6px 16px rgba(0,0,0,.08); }
-  .card img { display: block; width: 100%; height: auto; filter: contrast(1.04); }
-  .card .t { margin-top: 7px; font-weight: 500; }
-  .card .t i { font-style: normal; font-weight: 600; margin-right: 4px; }
-  .card .s { color: var(--sub); font-size: 11px; line-height: 1.4; }
-  .card a { color: inherit; }
+  .ph { position: absolute; display: block; color: inherit; text-decoration: none; }
+  .ph:hover { z-index: 5; }
+  .spread { position: relative; }
+  .ph.full { bottom: 0; }
+  /* 펼침면 전체: 사진 위에 지면 스캔을 곱하기로 → 흰 종이는 사라지고 검은 글자만 남음 */
+  .spread:has(.ph.full) .page { background: transparent; }
+  .spread:has(.ph.full) .page > img { mix-blend-mode: multiply; }
+  .ph.full img { height: 100%; object-fit: cover; opacity: var(--o, 1); }
+  .spread:has(.ph.full)::after { content: ""; position: absolute; z-index: 2; top: 0; bottom: 0; left: 47%; width: 6%; pointer-events: none;
+    background: linear-gradient(to right, transparent, rgba(0,0,0,.18) 50%, transparent); }  /* 사진 위 가운데 접힘 */
+  .ph img { display: block; width: 100%; height: auto; filter: grayscale(1) contrast(1.04); }
 
-  @media (max-width: 1100px) {
-    :root { --gut: 0px; }
-    .spread { grid-template-columns: minmax(0, var(--pageW)); gap: 14px; }
-    .page { grid-column: 1; }
-    .gut { display: none; }
-    .lead { border-top-color: transparent; }
-    .below { grid-column: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-    .below .card { position: static; }
+  @media (max-width: 760px) {
+    .spread { grid-template-columns: 1fr; }
+    .page.empty { display: none; }
+    .page.l, .page.r { box-shadow: none; }
+    .page + .page { border-top: 1px solid var(--bg); }
   }
-  @media (min-width: 1101px) { .below { display: none; } }
 </style>
 </head>
 <body>
 <header>
   <h1>프랑켄슈타인 — 장소 사진 시안</h1>
-  <p>메리 셸리 『프랑켄슈타인』(문학동네, 김선형 옮김) 지면 위에 원문 속 장소의 옛 사진을 붙였다. 사진은 위키미디어 공용에서 고른 흑백 이미지. 사진술(1839) 이전 시대라 판화·초기 사진으로 대신했다.</p>
+  <p>메리 셸리 『프랑켄슈타인』(문학동네, 김선형 옮김) 지면 위에 원문 속 장소의 옛 사진을 얹었다. 사진은 위키미디어 공용에서 고른 흑백 이미지. 사진술(1839) 이전 시대라 판화·초기 사진으로 대신했다.</p>
   <div class="tools">
-    <label><input type="checkbox" id="only"> 사진 있는 쪽만</label>
+    <label><input type="radio" name="mode" value="near"> 지명 옆에</label>
+    <label><input type="radio" name="mode" value="big"> 가운데 크게</label>
+    <label><input type="radio" name="mode" value="next"> 펼침면 전체 · 다음 면으로</label>
+    <label><input type="radio" name="mode" value="stack"> 펼침면 전체 · 겹치기</label>
+    <label><input type="checkbox" id="only"> 사진 있는 펼침면만</label>
     <span id="count"></span>
   </div>
   <nav class="index" id="index"></nav>
 </header>
 <main id="book"></main>
 <script>
-const PAGES = 280, CARD_GAP = 10;
+const PAGES = 280, PAGE_RATIO = 847 / 1205;      // 쪽 너비 / 높이
+const PH_W = 0.42, GAP = 0.012, MARGIN = 0.06;     // 사진 너비·간격·여백 (쪽 너비/높이 비율)
 const book = document.getElementById('book');
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
-function card(p, n) {
-  const meta = [p.year, p.artist, p.license].filter(Boolean).map(esc).join(' · ');
-  return `<div class="card" data-n="${n}">
-    <a href="${esc(p.url)}" target="_blank" rel="noopener"><img src="photos/${esc(p.key)}.jpg" width="${p.w}" height="${p.h}" loading="lazy" alt="${esc(p.term)} — ${esc(p.en)}"></a>
-    <div class="t"><i>${n}</i>${esc(p.label)} · ${esc(p.en)}</div>
-    <div class="s">${meta}</div></div>`;
-}
-
-// 카드가 서로 겹치지 않게 아래로 밀기
-function stack(gut) {
-  let floor = 0;
-  [...gut.querySelectorAll('.card')].forEach(c => {
-    const want = parseFloat(c.dataset.want) * gut.offsetHeight - 14;
-    const top = Math.max(want, floor);
-    c.style.top = top + 'px';
-    floor = top + c.offsetHeight + CARD_GAP;
+// 지명에 가장 가까우면서 다른 사진과 안 겹치는 자리. 빈자리가 없으면 지명 바로 아래 (겹침 허용)
+// ponytail: 자리 후보 전수 검사 — 한 쪽 최대 5장이라 충분
+function place(ps) {
+  const w = ps.length > 2 ? PH_W * 0.8 : PH_W, taken = [];
+  return ps.map(p => {
+    const [x0, y0, x1, y1] = p.box;
+    const h = w * (p.h / p.w) * PAGE_RATIO;          // 쪽 높이 기준 사진 높이
+    const cx = clamp((x0 + x1) / 2 - w / 2, MARGIN, 1 - MARGIN - w);
+    const free = (l, t) => !taken.some(r => l < r.l + w && r.l < l + w && t < r.b && r.t < t + h);
+    let best = { left: cx, top: clamp(y1 + GAP, MARGIN / 2, 1 - MARGIN / 2 - h), d: Infinity };
+    for (const left of [cx, MARGIN, 1 - MARGIN - w, 0.5 - w / 2])
+      for (let top = MARGIN / 2; top <= 1 - MARGIN / 2 - h; top += 0.01) {
+        const d = Math.abs(top - (y1 + GAP)) + Math.abs(left - cx) * 0.5;
+        if (d < best.d && free(left, top)) best = { left, top, d };
+      }
+    taken.push({ l: best.left, t: best.top, b: best.top + h });
+    return { ...p, ...best, pw: w };
   });
 }
 
+// 펼침면을 덮는 사진. 겹칠 땐 i번째 장을 1/(i+1) 불투명도로 → 모든 장이 같은 비율로 섞임 (이중 노출)
+function fullPhoto(p, i) {
+  return photo({ ...p, left: 0, top: 0, pw: 1 })
+    .replace('class="ph"', `class="ph full"`).replace('style="', `style="--i:${i};--o:${1 / (i + 1)};`);
+}
+
+function photo(p) {
+  return `<a class="ph" href="${esc(p.url)}" target="_blank" rel="noopener" style="left:${p.left * 100}%;top:${p.top * 100}%;width:${p.pw * 100}%"
+    title="${esc([p.label, p.en, p.year, p.artist, p.license].filter(Boolean).join(' · '))}">
+    <img src="photos/${esc(p.key)}.jpg" width="${p.w}" height="${p.h}" loading="lazy" alt="${esc(p.label)} — ${esc(p.en)}">
+    </a>`;
+}
+
+// 가운데 크게: 모든 사진 가운데 정렬. 여러 장이면 같은 너비로 세로로 쌓고 쪽 높이에 맞게 줄임
+const BIG_W = 0.84, BIG_H = 0.86, BIG_GAP = 0.012;
+function placeBig(ps) {
+  const rs = ps.map(p => (p.h / p.w) * PAGE_RATIO);  // 너비 1일 때 쪽 높이 비율
+  const sum = rs.reduce((a, b) => a + b, 0), gaps = BIG_GAP * (ps.length - 1);
+  const w = Math.min(BIG_W, (BIG_H - gaps) / sum);
+  let top = (1 - (w * sum + gaps)) / 2;
+  return ps.map((p, i) => {
+    const out = { ...p, pw: w, left: (1 - w) / 2, top };
+    top += w * rs[i] + BIG_GAP;
+    return out;
+  });
+}
+let mode = 'near';
+try { mode = localStorage.getItem('fk-mode') || 'near'; } catch {}
+if (mode === 'full') mode = 'next';
+const isFull = () => mode === 'next' || mode === 'stack';
+
+function page(pg, ps, side) {
+  if (pg < 1 || pg > PAGES) return `<div class="page empty ${side}"></div>`;
+  const marks = ps.map(({ box: [x0, y0, x1, y1] }) =>
+    `<div class="mark" style="left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%"></div>`).join('');
+  return `<div class="page ${side}" id="p${pg}">
+    <img src="pages/${String(pg).padStart(3, '0')}.jpg" width="847" height="1205" loading="lazy" alt="${pg}쪽">
+    ${marks}${isFull() ? '' : (mode === 'big' ? placeBig : place)(ps).map(photo).join('')}</div>`;
+}
+
+let byPage = {};
+function render() {
+  let html = '';
+  const queue = [];                                // 다음 면으로: 아직 못 얹은 사진 대기열
+  for (let l = 0; l <= PAGES; l += 2) {           // 펼침면 = [짝수, 홀수]. 1쪽은 오른쪽 단독
+    const ps = [...(byPage[l] || []), ...(byPage[l + 1] || [])];
+    queue.push(...ps);
+    // 다음 면으로: 한 면에 한 장, 남는 사진은 다음 펼침면에 / 겹치기: 그 면 사진을 전부 같은 크기로 겹침
+    const covers = mode === 'next' ? queue.splice(0, 1) : mode === 'stack' ? ps : [];
+    const cover = covers.map((p, i) => fullPhoto(p, i)).join('');
+    html += `<section class="spread${(isFull() ? covers.length : ps.length) ? ' has' : ''}">${cover}${page(l, byPage[l] || [], 'l')}${page(l + 1, byPage[l + 1] || [], 'r')}</section>`;
+  }
+  book.innerHTML = html;
+}
+
+document.querySelectorAll('[name=mode]').forEach(r => {
+  r.checked = r.value === mode;
+  r.addEventListener('change', () => {
+    const at = [...document.querySelectorAll('.page:not(.empty)')].find(el => el.getBoundingClientRect().bottom > 0);
+    mode = r.value;
+    try { localStorage.setItem('fk-mode', mode); } catch {}
+    render();
+    if (at) document.getElementById(at.id)?.scrollIntoView();  // 보던 쪽 유지
+  });
+});
+
 fetch('places.json').then(r => r.json()).then(places => {
-  const byPage = {};
-  places.forEach((p, i) => (byPage[p.page] ??= []).push({ ...p, n: i + 1 }));
+  places.forEach((p, i) => p.box && (byPage[p.page] ??= []).push({ ...p, n: i + 1 }));
   document.getElementById('count').textContent = `장소 ${places.length}곳 · ${Object.keys(byPage).length}쪽`;
   document.getElementById('index').innerHTML = places.map((p, i) =>
     `<a href="#p${p.page}"><b>${i + 1}</b> ${esc(p.en)}</a>`).join('');
 
-  let html = '';
-  for (let pg = 1; pg <= PAGES; pg++) {
-    const ps = byPage[pg] || [];
-    const side = pg % 2 ? 'r' : 'l';           // 홀수 쪽 → 오른쪽 바깥, 짝수 쪽 → 왼쪽 바깥
-    const marks = ps.filter(p => p.box).map(p => {
-      const [x0, y0, x1, y1] = p.box;
-      const lead = side === 'r'
-        ? `<div class="lead r" style="left:${x1 * 100}%;right:0;top:${y1 * 100}%"><i>${p.n}</i></div>`
-        : `<div class="lead l" style="left:0;right:${(1 - x0) * 100}%;top:${y1 * 100}%"><i>${p.n}</i></div>`;
-      return `<div class="mark" style="left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%"></div>${lead}`;
-    }).join('');
-    const cards = ps.map(p => card(p, p.n).replace('class="card"', `class="card" data-want="${p.box ? p.box[3] : 0.1}"`)).join('');
-    html += `<section class="spread${ps.length ? ' has' : ''}" id="p${pg}">
-      <div class="page"><img src="pages/${String(pg).padStart(3, '0')}.jpg" width="847" height="1205" loading="lazy" alt="${pg}쪽">${marks}</div>
-      ${ps.length ? `<div class="gut ${side}">${cards}</div><div class="below">${ps.map(p => card(p, p.n)).join('')}</div>` : ''}
-    </section>`;
-  }
-  book.innerHTML = html;
-
-  const relayout = () => document.querySelectorAll('.gut').forEach(stack);
-  window.addEventListener('resize', relayout);
-  document.querySelectorAll('.gut img').forEach(img => img.addEventListener('load', () => stack(img.closest('.gut'))));
-  relayout();
+  render();
   if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
 });
 

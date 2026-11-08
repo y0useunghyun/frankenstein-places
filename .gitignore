@@ -2,3 +2,4 @@ source.pdf
 .vercel
 __pycache__
 .DS_Store
+._*

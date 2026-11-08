@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>거대한 프랑켄슈타인</title>
+<style>
+  :root { --bg: #ffffff; --ink: #1d1c1a; --sub: #8a8780; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
+    font: 12px/1.5 "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif; }
+  /* 3D 무대: 사진마다 앞뒤 깊이가 크게 다름. 저절로 움직이지 않고, 마우스를 따라 시점만 살짝 이동 */
+  .stage { position: fixed; inset: 0; perspective: 2000px; overflow: hidden; transition: perspective-origin .8s ease-out; }
+  .world { position: absolute; left: 50%; top: 50%; width: 1000px; height: 1600px; transform-style: preserve-3d;
+    transform: translate(-50%, -50%); }
+  .ph { position: absolute; display: block; }
+  .ph:hover { filter: none !important; }
+  .cover { position: absolute; box-shadow: 0 4px 18px rgba(0,0,0,.25); background: #fff; }
+  .cap { position: fixed; left: 16px; bottom: 14px; color: var(--sub); }
+  .cap a { color: inherit; }
+  svg.shape { position: absolute; width: 0; height: 0; }
+</style>
+</head>
+<body>
+<div class="stage"><div class="world" id="world" role="img" aria-label="장소 사진을 마구 쌓아 만든 거대한 프랑켄슈타인, 가슴에 책 표지"></div></div>
+<div class="cap">프랑켄슈타인 — 91곳의 장소를 쌓은 몸 · <a href="./">지면 보기</a></div>
+<script>
+// 거인의 몸: 장소 사진을 비뚤게·크기 제각각·앞뒤 깊이 제각각으로 마구 쌓음 (실루엣으로 자르지 않음, 프레임 없음)
+const NS = 'http://www.w3.org/2000/svg';
+const W = 1000, H = 1600;
+const COUNT = 380;                                 // 쌓을 사진 수 (91장 반복)
+const SIZE_MIN = 34;                               // 사진 긴 변 최소 길이 (최대는 부위마다)
+const TILT = 32;                                   // 최대 기울기(도)
+const DEPTH = 480;                                 // 사진 앞뒤 깊이 범위 ±
+const COVER = { cx: 505, cy: 600, w: 200, h: 285, tilt: -3, z: 560 };   // DEPTH보다 앞   // 가슴 한가운데 책 표지, 가장 앞
+const PARALLAX = 6;                               // 마우스 따라 시점 이동 폭(%)
+const EXCLUDE = new Set(['23-10', '36-12', '43-16', '84-31', '228-81', '8-0', '145-50', '217-76', '191-66', '190-65']);   // 대지·액자·증서·과하게 잘린 것
+const world = document.getElementById('world');
+
+let seed = 1818;
+const rnd = (a = 0, b = 1) => a + (b - a) * ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const logRnd = (a, b) => Math.exp(rnd(Math.log(a), Math.log(b)));
+
+// [모양, 그 부위 사진 최대 크기] — 몸 모양은 '사진을 어디에 놓을지'만 정함
+const BODY = [
+  ['M415 110 Q505 20 600 108 Q625 175 615 260 Q600 330 505 345 Q410 330 395 260 Q385 170 420 95 Z', 190],   // 머리
+  ['M440 320 L575 320 L600 395 L415 395 Z', 100],                                                            // 목
+  ['M415 360 Q340 372 280 405 Q245 440 255 520 L300 890 Q500 925 705 890 L755 520 Q765 440 730 403 Q670 368 590 355 Z', 330], // 몸통
+  ['M262 418 Q190 430 170 520 L85 1040 Q90 1100 160 1095 L215 800 L245 560 Z', 120],                         // 왼팔 (더 김)
+  ['M745 410 Q815 425 835 520 L915 1000 Q905 1062 840 1055 L790 780 L760 560 Z', 115],                       // 오른팔
+  ['M300 880 L488 900 L475 1300 L468 1560 L325 1565 L335 1300 Z', 165],                                     // 왼다리
+  ['M520 900 L705 880 L675 1300 L685 1555 L540 1560 L532 1300 Z', 165],                                     // 오른다리
+  ['M58 1095 a64 72 0 1 0 128 0 a64 72 0 1 0 -128 0', 105],                                                  // 왼손 (큼)
+  ['M826 1050 a56 64 0 1 0 112 0 a56 64 0 1 0 -112 0', 100],                                                 // 오른손
+];
+const shapeSvg = document.body.appendChild(document.createElementNS(NS, 'svg'));
+shapeSvg.setAttribute('class', 'shape');
+const shapes = BODY.map(([d, max]) => {
+  const path = shapeSvg.appendChild(document.createElementNS(NS, 'path'));
+  path.setAttribute('d', d);
+  return { path, max };
+});
+function spot() {                                  // 몸 안의 무작위 점 + 그 부위의 사진 최대 크기
+  for (;;) {
+    const x = rnd(40, 960), y = rnd(20, 1580);
+    const part = shapes.find(sh => sh.path.isPointInFill(new DOMPoint(x, y)));
+    if (part) return [x, y, part.max];
+  }
+}
+
+function photo(p, cx, cy, long) {
+  const r = p.w / p.h, w = r >= 1 ? long : long * r, h = r >= 1 ? long / r : long;
+  const img = new Image();
+  img.className = 'ph';
+  img.src = `trim/${p.key}.jpg`;
+  img.alt = '';
+  img.title = `${p.label} · ${p.en} · ${p.page}쪽`;
+  img.addEventListener('error', () => img.remove(), { once: true });   // 못 불러온 사진은 숨김
+  const z = rnd(-DEPTH, DEPTH), near = (z + DEPTH) / (2 * DEPTH);   // 0 = 가장 뒤, 1 = 가장 앞
+  Object.assign(img.style, { left: `${cx - w / 2}px`, top: `${cy - h / 2}px`, width: `${w}px`, height: `${h}px`,
+    transform: `translateZ(${z.toFixed(1)}px) rotate(${rnd(-TILT, TILT).toFixed(1)}deg)`,
+    // 깊이 단서: 뒤는 흐리고 옅게, 앞은 또렷하고 그림자 진하게
+    filter: `grayscale(1) contrast(1.05) blur(${((1 - near) * 1.6).toFixed(2)}px)`,
+    opacity: (0.55 + near * 0.45).toFixed(2),
+    boxShadow: `0 ${(2 + near * 18).toFixed(0)}px ${(6 + near * 34).toFixed(0)}px rgba(0,0,0,${(0.08 + near * 0.22).toFixed(2)})` });
+  world.appendChild(img);
+}
+
+let scale = 1;
+function fit() {                                   // 거인 전체가 화면에 들어오게
+  scale = Math.min(innerWidth / (W * 1.25), innerHeight / (H * 1.18));   // 앞쪽 사진이 원근으로 커지는 만큼 여유
+}
+fit();
+addEventListener('resize', fit);
+
+function place() { world.style.transform = `translate(-50%, -50%) scale(${scale})`; }
+place();
+addEventListener('resize', place);
+
+// 저절로 움직이지 않음. 마우스(손가락)를 따라 시점만 살짝 옮겨 층이 어긋나 보이게
+const stage = document.querySelector('.stage');
+addEventListener('pointermove', e => {
+  const x = 50 + (e.clientX / innerWidth - 0.5) * 2 * PARALLAX;
+  const y = 50 + (e.clientY / innerHeight - 0.5) * 2 * PARALLAX;
+  stage.style.perspectiveOrigin = `${x}% ${y}%`;
+});
+
+Promise.all([fetch('places.json').then(r => r.json()), fetch('trim.json').then(r => r.json())]).then(([all, sizes]) => {
+  const places = all.filter(p => !EXCLUDE.has(p.key)).map(p => ({ ...p, w: sizes[p.key][0], h: sizes[p.key][1] }));
+  for (let i = 0; i < COUNT; i++) {
+    const [x, y, max] = spot();
+    photo(places[i % places.length], x, y, logRnd(SIZE_MIN, max));
+  }
+  // 가슴 한가운데 책 표지. cover.jpg가 있으면 그걸, 없으면 책 첫 장(제목 페이지)
+  const { cx, cy, w, h, tilt, z } = COVER;
+  const cover = new Image();
+  cover.className = 'cover';
+  cover.alt = '프랑켄슈타인 책 표지';
+  cover.src = 'cover.jpg';
+  cover.addEventListener('error', () => { cover.src = 'pages/001.jpg'; cover.style.clipPath = 'inset(6% 8.5%)'; }, { once: true });   // 대체 이미지는 스캔 재단선 가림
+  Object.assign(cover.style, { left: `${cx - w / 2}px`, top: `${cy - h / 2}px`, width: `${w}px`, height: `${h}px`,
+    objectFit: 'cover', transform: `translateZ(${z}px) rotate(${tilt}deg)` });
+  world.appendChild(cover);
+});
+</script>
+</body>
+</html>
