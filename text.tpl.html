@@ -9,5 +9,25 @@
   body { padding: 10px; font: 13px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; word-break: break-all; text-align: justify; }
 </style>
 </head>
-<body>{{BODY}}</body>
+<body>{{BODY}}
+<script>
+// 저절로 천천히 아래로 흐름. 끝나면 처음부터. 클릭·스페이스 = 멈춤/다시
+const SPEED = 24;            // 초당 px
+let on = true, last = 0, y = scrollY;
+function step(t) {
+  if (on && last) {
+    y += SPEED * (t - last) / 1000;
+    if (y >= document.documentElement.scrollHeight - innerHeight) y = 0;
+    scrollTo(0, y);
+  }
+  last = t; requestAnimationFrame(step);
+}
+requestAnimationFrame(step);
+const toggle = () => { on = !on; y = scrollY; };
+addEventListener('click', toggle);
+addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); toggle(); } });
+addEventListener('wheel', () => { y = scrollY; }, { passive: true });   // 직접 굴리면 그 자리부터 이어감
+addEventListener('touchend', () => { y = scrollY; });
+</script>
+</body>
 </html>
