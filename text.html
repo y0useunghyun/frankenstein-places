@@ -19,7 +19,7 @@
 const VX = 30, VY = 22;                 // 초당 px (확대 1배 기준)
 const MIN = 0.25, MAX = 3;
 const wall = document.getElementById('wall'), first = wall.firstElementChild;
-const W = Math.round(innerWidth / 2);   // 한 장 너비: 처음 화면에 두 장
+const W = Math.round(innerWidth);       // 한 장 너비: 화면 전체 (예전 두 장 너비)
 first.style.width = W + 'px';
 let s = 1, x = 0, y = 0, on = true, last = 0, grab = null;
 
