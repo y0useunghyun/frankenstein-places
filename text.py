@@ -19,7 +19,8 @@ flat = ' '.join(''.join(join(t) for t, _ in lines).split())
 open('text.html', 'w').write(tpl.replace('{{BODY}}', html.escape(flat)))
 
 # 제목 크게 버전: 같은 흐름 안에서 제목만 튀어나옴
-out = ''.join(f'<b class="h{lv}">{html.escape(t.strip())}</b> ' if lv else html.escape(join(t)) for t, lv in lines)
+# 본문은 평탄 그대로, 제목은 제자리에서 크게 떠서 겹침 (줄 높이 안 바뀜)
+out = ''.join(f'<span class="h h{lv}" data-t="{html.escape(t.strip())}">{html.escape(join(t))}</span>' if lv else html.escape(join(t)) for t, lv in lines)
 open('text-big.html', 'w').write(tpl.replace('<title>프랑켄슈타인 원문</title>', '<title>프랑켄슈타인 원문 · 제목</title>')
                                      .replace('{{BODY}}', re.sub(r'\s+', ' ', out)))
 print(len(flat), 'chars /', sum(1 for _, lv in lines if lv), 'headings')

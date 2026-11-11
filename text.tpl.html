@@ -10,8 +10,10 @@
   body.drag { cursor: grabbing; }
   #book { position: fixed; top: 0; left: 0; transform-origin: 0 0; will-change: transform;
           font: 13px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; word-break: break-all; text-align: justify; }
-  .h1, .h2, .h3 { font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
-  .h1 { font-size: 72px; } .h2 { font-size: 150px; } .h3 { font-size: 260px; }
+  .h { position: relative; }
+  .h::after { content: attr(data-t); position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+              white-space: nowrap; pointer-events: none; font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+  .h1::after { font-size: 72px; } .h2::after { font-size: 150px; } .h3::after { font-size: 260px; top: 0; transform: none; }
 </style>
 </head>
 <body>
