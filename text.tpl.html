@@ -8,66 +8,70 @@
   html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; color: #111; }
   body { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
   body.drag { cursor: grabbing; }
-  #wall { position: fixed; top: 0; left: 0; display: flex; transform-origin: 0 0; will-change: transform; }
-  .sheet { flex: none; box-sizing: border-box; padding: 0; font: 13px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; word-break: break-all; text-align: justify; }
+  #book { position: fixed; top: 0; left: 0; transform-origin: 0 0; will-change: transform;
+          font: 13px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; word-break: break-all; text-align: justify; }
 </style>
 </head>
 <body>
-<div id="wall"><div class="sheet">{{BODY}}</div></div>
+<div id="book">{{BODY}}</div>
 <script>
-// 같은 원문 장을 좌우로 이어 붙여 대각선으로 흐름. 휠·+/− = 축소·확대, 끌기 = 직접 움직임, 클릭·스페이스 = 멈춤
-const VX = 30, VY = 22;                 // 초당 px (확대 1배 기준)
-const MIN = 0.25, MAX = 3;
-const wall = document.getElementById('wall'), first = wall.firstElementChild;
-const W = Math.round(innerWidth);       // 한 장 너비: 화면 전체 (예전 두 장 너비)
-first.style.width = W + 'px';
-let s = 1, x = 0, y = 0, on = true, last = 0, grab = null;
+// 책 한 권 = 화면 비율의 직사각형 한 덩어리. 반복 없음.
+// 저절로 흐르다 가장자리에서 튕김. 휠·+/− = 축소·확대(최소 = 한 권 전체), 끌기 = 직접, 클릭·스페이스 = 멈춤
+const book = document.getElementById('book');
+let W, H, MIN, s = 1, x = 0, y = 0, vx = 30, vy = 22, on = true, last = 0, grab = null;
 
-function fill() {                       // 지금 배율로 화면을 덮을 만큼 장 복제 (늘기만 함)
-  const need = Math.ceil(innerWidth / (W * s)) + 1;
-  while (wall.children.length < need) {
-    const c = first.cloneNode(true); c.setAttribute('aria-hidden', 'true'); wall.appendChild(c);
+function layout() {                    // 덩어리 비율을 화면 비율에 맞춤 (두 번 재면 거의 맞음)
+  const aspect = innerWidth / innerHeight;
+  book.style.width = innerWidth + 'px';
+  for (let i = 0; i < 2; i++) {
+    const area = book.offsetWidth * book.offsetHeight;
+    book.style.width = Math.round(Math.sqrt(area * aspect)) + 'px';
   }
+  W = book.offsetWidth; H = book.offsetHeight;
+  MIN = Math.min(innerWidth / W, innerHeight / H);
 }
-function draw() { wall.style.transform = `scale(${s}) translate(${-x}px, ${-y}px)`; }
-function zoom(f) {                      // 화면 가운데를 기준으로
-  const s1 = Math.min(MAX, Math.max(MIN, s * f));
+function clamp() {                     // 화면보다 작으면 가운데, 크면 덩어리 안에서만
+  const vw = innerWidth / s, vh = innerHeight / s;
+  x = W > vw ? Math.min(Math.max(0, x), W - vw) : (W - vw) / 2;
+  y = H > vh ? Math.min(Math.max(0, y), H - vh) : (H - vh) / 2;
+}
+function draw() { clamp(); book.style.transform = `scale(${s}) translate(${-x}px, ${-y}px)`; }
+function zoom(f) {                     // 화면 가운데 기준
+  const s1 = Math.min(3, Math.max(MIN, s * f));
   x += innerWidth / 2 / s - innerWidth / 2 / s1;
   y += innerHeight / 2 / s - innerHeight / 2 / s1;
-  s = s1; x = ((x % W) + W) % W; y = Math.max(0, y); fill(); draw();
+  s = s1; draw();
 }
 function step(t) {
   if (on && !grab && last) {
     const dt = Math.min(t - last, 100) / 1000;
-    x = (x + VX * dt) % W;
-    y += VY * dt;
-    if (y > first.offsetHeight - innerHeight / s) y = 0;
+    x += vx * dt; y += vy * dt;
+    const vw = innerWidth / s, vh = innerHeight / s;
+    if (x <= 0 || x >= W - vw) vx = x <= 0 ? Math.abs(vx) : -Math.abs(vx);   // 가장자리에서 튕김
+    if (y <= 0 || y >= H - vh) vy = y <= 0 ? Math.abs(vy) : -Math.abs(vy);
     draw();
   }
   last = t; requestAnimationFrame(step);
 }
-fill(); requestAnimationFrame(step);
+layout(); draw(); requestAnimationFrame(step);
 
 addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(-e.deltaY * 0.002)); }, { passive: false });
 addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); on = !on; }
   else if (e.key === '+' || e.key === '=') zoom(1.25);
   else if (e.key === '-' || e.key === '_') zoom(0.8);
-  else if (e.key === '0') { s = 1; zoom(1); }
+  else if (e.key === '0') { s = 1; draw(); }
 });
-// 잡고 끌기: 끄는 동안 자동 흐름 멈춤, 거의 안 움직였으면 클릭(멈춤/다시)
 addEventListener('pointerdown', e => { grab = { px: e.clientX, py: e.clientY, x, y, moved: false }; document.body.classList.add('drag'); });
 addEventListener('pointermove', e => {
   if (!grab) return;
   const dx = e.clientX - grab.px, dy = e.clientY - grab.py;
   if (Math.abs(dx) + Math.abs(dy) > 4) grab.moved = true;
-  x = ((grab.x - dx / s) % W + W) % W;
-  y = Math.min(Math.max(0, grab.y - dy / s), first.offsetHeight - innerHeight / s);
-  draw();
+  x = grab.x - dx / s; y = grab.y - dy / s; draw();
 });
 addEventListener('pointerup', () => { if (grab && !grab.moved) on = !on; grab = null; document.body.classList.remove('drag'); });
 addEventListener('pointercancel', () => { grab = null; document.body.classList.remove('drag'); });
-addEventListener('resize', () => { fill(); draw(); });
+addEventListener('resize', () => { layout(); s = Math.max(s, MIN); draw(); });
 </script>
 </body>
 </html>
