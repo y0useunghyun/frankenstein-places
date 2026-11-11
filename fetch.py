@@ -21,7 +21,7 @@ for i, (page, term, en, q) in enumerate(csv.reader(open('places.tsv'), delimiter
       api = 'https://commons.wikimedia.org/w/api.php?' + urllib.parse.urlencode({
         'action': 'query', 'format': 'json', 'generator': 'search', 'gsrnamespace': 6,
         'gsrsearch': q + ' filetype:bitmap', 'gsrlimit': 15, 'prop': 'imageinfo',
-        'iiprop': 'url|size|extmetadata', 'iiurlwidth': 900})
+        'iiprop': 'url|size|extmetadata', 'iiurlwidth': 960})
       return sorted(json.loads(get(api)).get('query', {}).get('pages', {}).values(), key=lambda p: p['index'])
     pages = search(q) or search(' '.join(q.split()[:2]) + ' 19th century')
     cands = [p for p in pages if p['imageinfo'][0]['width'] >= 500 and p['title'].lower().endswith(('.jpg', '.jpeg', '.png', '.tif', '.tiff'))]

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>촬영용 뷰어</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #8a8a8a; font: 13px/1.4 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; overflow: hidden; cursor: none; }
+  img { position: fixed; inset: 0; margin: auto; max-width: 100vw; max-height: 100vh; }
+  .cap { position: fixed; left: 16px; bottom: 12px; user-select: none; }
+  .cap b { color: #ccc; font-weight: 500; }
+  .help { position: fixed; right: 16px; bottom: 12px; }
+  body.clean .cap, body.clean .help { display: none; }
+</style>
+</head>
+<body>
+<img id="img" alt="">
+<div class="cap" id="cap"></div>
+<div class="help">← → 넘기기 · H 글자 숨김 · F 전체화면</div>
+<script>
+let list = [], i = 0;
+const img = document.getElementById('img'), cap = document.getElementById('cap');
+function show() {
+  const p = list[i];
+  img.src = p.src;
+  img.alt = p.label;
+  cap.innerHTML = `<b>${i + 1} / ${list.length}</b> · ${p.page}쪽 · ${p.label} · ${p.en}${p.year ? ' · ' + p.year : ''}`;
+  try { localStorage.setItem('shoot-i', i); } catch {}
+}
+Promise.all([fetch('places.json').then(r => r.json()), fetch('collect.json').then(r => r.json()).catch(() => ({}))])
+  .then(([placed, collected]) => {
+    list = [
+      ...placed.map(p => ({ ...p, src: `photos/${p.key}.jpg` })),
+      ...Object.entries(collected).map(([k, p]) => ({ ...p, src: `collect/${k}.jpg` })),
+    ].sort((a, b) => parseInt(a.page) - parseInt(b.page));
+    try { i = Math.min(+localStorage.getItem('shoot-i') || 0, list.length - 1); } catch {}
+    show();
+  });
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') i = (i + 1) % list.length;
+  else if (e.key === 'ArrowLeft') i = (i - 1 + list.length) % list.length;
+  else if (e.key.toLowerCase() === 'h') return document.body.classList.toggle('clean');
+  else if (e.key.toLowerCase() === 'f') return document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  else return;
+  show();
+});
+addEventListener('click', e => { i = (i + (e.clientX > innerWidth / 2 ? 1 : -1) + list.length) % list.length; show(); });
+</script>
+</body>
+</html>

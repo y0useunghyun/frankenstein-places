@@ -10,8 +10,8 @@ def get(url):
 rows = list(csv.reader(open('places.tsv'), delimiter='\t'))
 out = json.load(open('credits.json'))
 for key, title in csv.reader(open('pick.tsv'), delimiter='\t'):
-    time.sleep(2.5)
-    q = {'action': 'query', 'format': 'json', 'prop': 'imageinfo', 'iiprop': 'url|extmetadata', 'iiurlwidth': 900}
+    time.sleep(5)
+    q = {'action': 'query', 'format': 'json', 'prop': 'imageinfo', 'iiprop': 'url|extmetadata', 'iiurlwidth': 960}
     if title.startswith('?'): q.update(generator='search', gsrnamespace=6, gsrsearch=title[1:], gsrlimit=1)
     else: q['titles'] = 'File:' + title
     p = next(iter(json.loads(get('https://commons.wikimedia.org/w/api.php?' + urllib.parse.urlencode(q)))['query']['pages'].values()))

@@ -1,4 +1,5 @@
 source.pdf
 *.py
 *.tsv
+*.log
 credits.json
