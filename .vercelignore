@@ -3,3 +3,4 @@ source.pdf
 *.tsv
 *.log
 credits.json
+text.tpl.html
