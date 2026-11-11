@@ -5,29 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>프랑켄슈타인 원문</title>
 <style>
-  html, body { margin: 0; background: #fff; color: #111; }
-  body { padding: 10px; font: 13px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; word-break: break-all; text-align: justify; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; color: #111; }
+  /* 같은 글자 화면 두 장을 좌우로 붙여서, 한 장만큼 가면 이음새 없이 처음으로 */
+  #wall { position: fixed; top: 0; left: 0; display: flex; width: 200vw; will-change: transform; }
+  .sheet { width: 100vw; box-sizing: border-box; padding: 10px; font: 13px/1.55 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; word-break: break-all; text-align: justify; }
 </style>
 </head>
-<body>{{BODY}}
+<body>
+<div id="wall"><div class="sheet">{{BODY}}</div><div class="sheet" aria-hidden="true">{{BODY}}</div></div>
 <script>
-// 저절로 천천히 아래로 흐름. 끝나면 처음부터. 클릭·스페이스 = 멈춤/다시
-const SPEED = 24;            // 초당 px
-let on = true, last = 0, y = scrollY;
+// 저절로 대각선으로 흐름 (오른쪽 + 아래). 클릭·스페이스 = 멈춤/다시
+const VX = 30, VY = 22;      // 초당 px
+const wall = document.getElementById('wall'), sheet = wall.firstElementChild;
+let on = true, last = 0, x = 0, y = 0;
 function step(t) {
   if (on && last) {
-    y += SPEED * (t - last) / 1000;
-    if (y >= document.documentElement.scrollHeight - innerHeight) y = 0;
-    scrollTo(0, y);
+    const dt = Math.min(t - last, 100) / 1000;
+    x = (x + VX * dt) % sheet.offsetWidth;
+    y += VY * dt;
+    if (y > sheet.offsetHeight - innerHeight) y = 0;
+    wall.style.transform = `translate(${-x}px, ${-y}px)`;
   }
   last = t; requestAnimationFrame(step);
 }
 requestAnimationFrame(step);
-const toggle = () => { on = !on; y = scrollY; };
+const toggle = () => { on = !on; };
 addEventListener('click', toggle);
 addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); toggle(); } });
-addEventListener('wheel', () => { y = scrollY; }, { passive: true });   // 직접 굴리면 그 자리부터 이어감
-addEventListener('touchend', () => { y = scrollY; });
 </script>
 </body>
 </html>
